@@ -8,13 +8,23 @@ A beautiful, modern dashboard that monitors your OpenClaw agent's activity, toke
 
 ## ✨ Features
 
+### Core Monitoring
 - **📊 Token Usage Tracking** - Real data from OpenClaw session files
 - **💰 Cost Monitoring** - Daily and weekly cost breakdowns by provider/model
 - **💬 Message Counter** - Track actual Telegram messages (filters out system events)
 - **⏰ Cron Job Status** - Live view of scheduled jobs from OpenClaw cron
 - **📈 Historical Charts** - 7-day token usage visualization with Chart.js
 - **🔄 Session Analytics** - Per-session usage statistics
-- **🌙 Dark Mode** - Beautiful dark theme support
+- **🌙 Dark Mode** - Beautiful dark theme
+
+### Task Management (NEW in v3.0)
+- **📋 Kanban Board** - Drag & drop task management (To Do → In Progress → Done → Archived)
+- **📝 Notes for Agent** - Leave instructions for your agent to check during heartbeats
+- **🤖 Live Agent Status** - Real-time online/offline indicator (polls every 10s)
+- **📜 Action Log** - Activity history with timestamps (last 100 entries)
+- **📁 Quick Deliverables** - Fast access to important folders
+
+![Kanban Board](screenshots/kanban-board.png)
 
 ![Dashboard Dark Mode](screenshots/dashboard-dark.png)
 
@@ -95,6 +105,45 @@ No manual logging required - everything is automatically extracted from your Ope
 | `GET /api/cron/summary` | Summary with next runs |
 | `GET /api/cron/next?count=5` | Next scheduled jobs |
 | `GET /api/cron/recent?count=10` | Recent job runs |
+
+### Kanban Board
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/kanban` | Get all tasks grouped by column |
+| `POST /api/kanban` | Create new task |
+| `PATCH /api/kanban/{id}` | Update task |
+| `DELETE /api/kanban/{id}` | Delete task |
+| `POST /api/kanban/{id}/move` | Move task to different column |
+
+### Notes
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/notes` | Get all notes |
+| `POST /api/notes` | Create note |
+| `PATCH /api/notes/{id}/read` | Mark as read |
+| `DELETE /api/notes/{id}` | Delete note |
+
+### Agent Status
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/agent/status` | Get real-time agent status |
+
+### Action Log
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/logs` | Get action log entries |
+| `DELETE /api/logs/clear` | Clear old logs |
+
+### Deliverables
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/deliverables` | Get quick access items |
+| `POST /api/deliverables` | Add deliverable |
 
 ### Cache
 
