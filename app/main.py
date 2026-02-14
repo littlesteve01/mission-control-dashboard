@@ -619,12 +619,29 @@ async def get_agent_status():
     import subprocess
     import json as json_lib
     
+    # Find openclaw binary
+    openclaw_paths = [
+        "/home/stephan/.npm-global/bin/openclaw",
+        os.path.expanduser("~/.npm-global/bin/openclaw"),
+        "openclaw"
+    ]
+    
+    openclaw_cmd = None
+    for path in openclaw_paths:
+        if os.path.exists(path):
+            openclaw_cmd = path
+            break
+    
+    if not openclaw_cmd:
+        openclaw_cmd = "openclaw"  # fallback to PATH
+    
     try:
         result = subprocess.run(
-            ["openclaw", "status", "--json"],
+            [openclaw_cmd, "status", "--json"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
+            env={**os.environ, "PATH": f"/home/stephan/.npm-global/bin:{os.environ.get('PATH', '')}"}
         )
         
         if result.returncode == 0:

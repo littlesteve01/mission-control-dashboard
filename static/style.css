@@ -1005,67 +1005,112 @@ input:focus-visible {
     animation-delay: calc(var(--delay, 0) * 50ms);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     .two-col-grid {
         grid-template-columns: 1fr;
+        gap: var(--space-unit-2);
     }
 }
 
 /* ============================================
    Agent Status
    ============================================ */
+.agent-status-panel {
+    min-height: 120px;
+}
+
 .agent-status-content {
     padding: var(--space-unit-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-unit);
 }
 
 .agent-indicator {
     display: flex;
     align-items: center;
-    gap: var(--space-unit);
-    padding: var(--space-unit-2);
-    border-radius: 8px;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
     background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
 }
 
 .agent-indicator.online {
-    background: var(--success-soft);
+    background: linear-gradient(135deg, var(--success-soft) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border-color: var(--success);
 }
 
 .agent-indicator.offline {
-    background: var(--error-soft);
+    background: linear-gradient(135deg, var(--error-soft) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border-color: var(--error);
+}
+
+.agent-indicator.checking {
+    background: var(--bg-surface);
+    border-color: var(--border);
 }
 
 .agent-dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--text-muted);
+    flex-shrink: 0;
 }
 
 .agent-indicator.online .agent-dot {
     background: var(--success);
-    box-shadow: 0 0 8px var(--success);
+    box-shadow: 0 0 12px var(--success), 0 0 4px var(--success);
     animation: pulse 2s infinite;
 }
 
 .agent-indicator.offline .agent-dot {
     background: var(--error);
+    box-shadow: 0 0 8px var(--error);
 }
 
 .agent-state {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
+    flex: 1;
 }
 
 .agent-details {
-    margin-top: var(--space-unit);
     font-size: 12px;
     color: var(--text-muted);
+    padding: 0 4px;
+}
+
+.agent-model {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--bg-surface);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .agent-status-panel {
+        min-height: auto;
+    }
+    
+    .agent-indicator {
+        padding: 14px 16px;
+    }
+    
+    .agent-state {
+        font-size: 14px;
+    }
 }
 
 /* ============================================
    Notes
    ============================================ */
+.notes-panel {
+    min-height: 120px;
+}
+
 .notes-list {
     max-height: 200px;
     overflow-y: auto;
@@ -1076,42 +1121,47 @@ input:focus-visible {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: var(--space-unit) var(--space-unit-2);
+    padding: 12px 16px;
     margin-bottom: var(--space-unit);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--bg-surface);
-    border-left: 3px solid var(--border);
+    border-left: 4px solid var(--border);
+    gap: 12px;
 }
 
 .note-item.unread {
     border-left-color: var(--info);
-    background: var(--info-soft);
+    background: linear-gradient(135deg, var(--info-soft) 0%, rgba(59, 130, 246, 0.05) 100%);
 }
 
 .note-item.urgent {
     border-left-color: var(--error);
+    background: var(--error-soft);
 }
 
 .note-item.high {
     border-left-color: var(--warning);
+    background: var(--amber-soft);
 }
 
 .note-content {
     flex: 1;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.5;
+    word-break: break-word;
 }
 
 .note-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-unit);
-    margin-left: var(--space-unit-2);
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .note-time {
     font-size: 11px;
     color: var(--text-muted);
+    white-space: nowrap;
 }
 
 .note-action {
@@ -1119,9 +1169,10 @@ input:focus-visible {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 14px;
-    padding: 2px;
-    border-radius: 4px;
+    font-size: 16px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all var(--transition-fast);
 }
 
 .note-action:hover {
@@ -1131,6 +1182,30 @@ input:focus-visible {
 
 .note-action.delete:hover {
     color: var(--error);
+    background: var(--error-soft);
+}
+
+@media (max-width: 768px) {
+    .notes-list {
+        max-height: 180px;
+        padding: 8px;
+    }
+    
+    .note-item {
+        flex-direction: column;
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .note-meta {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .note-action {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
 }
 
 /* ============================================
@@ -1151,12 +1226,42 @@ input:focus-visible {
 @media (max-width: 1200px) {
     .kanban-board {
         grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-unit);
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .kanban-board {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: var(--space-unit);
+        padding: var(--space-unit);
+        min-height: 280px;
+    }
+    
+    .kanban-column {
+        min-width: 85vw;
+        max-width: 85vw;
+        scroll-snap-align: start;
+        flex-shrink: 0;
+    }
+    
+    .kanban-tasks {
+        min-height: 180px;
+    }
+    
+    /* Scroll indicator hint */
+    .kanban-panel::after {
+        content: '← Swipe →';
+        display: block;
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-muted);
+        padding: var(--space-unit);
+        opacity: 0.6;
     }
 }
 
@@ -1285,6 +1390,10 @@ input:focus-visible {
 /* ============================================
    Action Log
    ============================================ */
+.log-panel {
+    min-height: 120px;
+}
+
 .action-log {
     max-height: 250px;
     overflow-y: auto;
@@ -1294,10 +1403,15 @@ input:focus-visible {
 .log-entry {
     display: flex;
     align-items: center;
-    gap: var(--space-unit);
-    padding: var(--space-unit) 0;
+    gap: 10px;
+    padding: 10px 8px;
     border-bottom: 1px solid var(--border-subtle);
-    font-size: 12px;
+    font-size: 13px;
+    transition: background var(--transition-fast);
+}
+
+.log-entry:hover {
+    background: var(--bg-surface);
 }
 
 .log-entry:last-child {
@@ -1305,19 +1419,40 @@ input:focus-visible {
 }
 
 .log-icon {
-    font-size: 14px;
+    font-size: 16px;
     flex-shrink: 0;
+    width: 24px;
+    text-align: center;
 }
 
 .log-details {
     flex: 1;
     color: var(--text-secondary);
+    line-height: 1.4;
 }
 
 .log-time {
     color: var(--text-muted);
     font-size: 11px;
     flex-shrink: 0;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .action-log {
+        max-height: 200px;
+        padding: 8px;
+    }
+    
+    .log-entry {
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+    
+    .log-icon {
+        font-size: 14px;
+        width: 20px;
+    }
 }
 
 /* ============================================
@@ -1330,30 +1465,56 @@ input:focus-visible {
     padding: var(--space-unit-2);
 }
 
+@media (max-width: 768px) {
+    .deliverables-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: var(--space-unit);
+    }
+}
+
 .deliverable-item {
     display: flex;
     align-items: center;
     gap: var(--space-unit);
     padding: var(--space-unit) var(--space-unit-2);
     background: var(--bg-surface);
-    border-radius: 6px;
+    border-radius: 8px;
     text-decoration: none;
     color: var(--text-primary);
     transition: all var(--transition-fast);
     cursor: pointer;
+    border: 1px solid var(--border-subtle);
 }
 
 .deliverable-item:hover {
     background: var(--bg-elevated);
     transform: translateX(4px);
+    border-color: var(--amber);
+}
+
+@media (max-width: 768px) {
+    .deliverable-item {
+        padding: 12px 16px;
+    }
+    
+    .deliverable-item:hover {
+        transform: none;
+    }
+    
+    .deliverable-item:active {
+        background: var(--amber-soft);
+        transform: scale(0.98);
+    }
 }
 
 .deliverable-icon {
-    font-size: 18px;
+    font-size: 20px;
+    flex-shrink: 0;
 }
 
 .deliverable-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
 }
 
