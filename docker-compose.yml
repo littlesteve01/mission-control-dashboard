@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  mission-control:
+    build: .
+    container_name: mission-control
+    ports:
+      - "8087:8087"
+    volumes:
+      - ./data:/app/data
+      - ./templates:/app/templates
+      - ./static:/app/static
+    environment:
+      - TZ=Europe/Berlin
+    restart: unless-stopped

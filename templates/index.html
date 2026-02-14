@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0c0c14">
+    <title>Mission Control — Clawdi Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Skip to main content -->
+    <a href="#main" class="skip-link">Skip to main content</a>
+    
+    <!-- Grain overlay (decorative) -->
+    <div class="grain" aria-hidden="true"></div>
+    
+    <div class="container">
+        <header role="banner">
+            <div class="header-left">
+                <div class="logo-mark" aria-hidden="true"></div>
+                <h1 style="text-wrap: balance;">Mission Control</h1>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" role="status" aria-live="polite">
+                    <span class="status-dot" id="status-badge" aria-hidden="true"></span>
+                    <span class="status-text">System</span>
+                </div>
+                <div class="uptime">
+                    <span class="uptime-value" id="uptime">--</span>
+                </div>
+            </div>
+        </header>
+
+        <main id="main">
+            <!-- Stats Grid -->
+            <section class="stats-grid" aria-label="Statistik Übersicht">
+                <article class="stat-card" style="--delay: 0">
+                    <div class="stat-card-inner">
+                        <header class="stat-header">
+                            <span class="stat-icon" aria-hidden="true">📋</span>
+                            <span class="stat-label">Tasks heute</span>
+                        </header>
+                        <p class="stat-value" id="tasks-today">-</p>
+                        <footer class="stat-footer">
+                            <span class="stat-success"><span id="completed-today">-</span>&nbsp;✓</span>
+                            <span class="stat-error"><span id="failed-today">-</span>&nbsp;✗</span>
+                        </footer>
+                    </div>
+                    <div class="stat-glow" aria-hidden="true"></div>
+                </article>
+                
+                <article class="stat-card" style="--delay: 1">
+                    <div class="stat-card-inner">
+                        <header class="stat-header">
+                            <span class="stat-icon" aria-hidden="true">🔄</span>
+                            <span class="stat-label">Aktiv</span>
+                        </header>
+                        <p class="stat-value accent" id="running-now">-</p>
+                        <footer class="stat-footer">
+                            <span class="stat-muted">laufende Tasks</span>
+                        </footer>
+                    </div>
+                    <div class="stat-glow" aria-hidden="true"></div>
+                </article>
+                
+                <article class="stat-card" style="--delay: 2">
+                    <div class="stat-card-inner">
+                        <header class="stat-header">
+                            <span class="stat-icon" aria-hidden="true">🪙</span>
+                            <span class="stat-label">Tokens heute</span>
+                        </header>
+                        <p class="stat-value mono" id="tokens-today">-</p>
+                        <footer class="stat-footer">
+                            <span class="stat-muted"><span id="tokens-input">-</span>&nbsp;in</span>
+                            <span class="stat-divider">/</span>
+                            <span class="stat-muted"><span id="tokens-output">-</span>&nbsp;out</span>
+                        </footer>
+                    </div>
+                    <div class="stat-glow" aria-hidden="true"></div>
+                </article>
+                
+                <article class="stat-card highlight" style="--delay: 3">
+                    <div class="stat-card-inner">
+                        <header class="stat-header">
+                            <span class="stat-icon" aria-hidden="true">💰</span>
+                            <span class="stat-label">Kosten heute</span>
+                        </header>
+                        <p class="stat-value mono cost" id="cost-today">-</p>
+                        <footer class="stat-footer">
+                            <span class="stat-muted">API Kosten</span>
+                        </footer>
+                    </div>
+                    <div class="stat-glow amber" aria-hidden="true"></div>
+                </article>
+                
+                <article class="stat-card" style="--delay: 4">
+                    <div class="stat-card-inner">
+                        <header class="stat-header">
+                            <span class="stat-icon" aria-hidden="true">🌐</span>
+                            <span class="stat-label">API Calls</span>
+                        </header>
+                        <p class="stat-value mono" id="api-calls-today">-</p>
+                        <footer class="stat-footer">
+                            <span class="stat-error"><span id="api-errors-today">-</span>&nbsp;errors</span>
+                        </footer>
+                    </div>
+                    <div class="stat-glow" aria-hidden="true"></div>
+                </article>
+                
+                <article class="stat-card" style="--delay: 5">
+                    <div class="stat-card-inner">
+                        <header class="stat-header">
+                            <span class="stat-icon" aria-hidden="true">💬</span>
+                            <span class="stat-label">Messages</span>
+                        </header>
+                        <p class="stat-value" id="messages-today">-</p>
+                        <footer class="stat-footer">
+                            <span class="stat-muted">Telegram&nbsp;empfangen</span>
+                        </footer>
+                    </div>
+                    <div class="stat-glow" aria-hidden="true"></div>
+                </article>
+            </section>
+
+            <!-- Main Grid -->
+            <div class="main-grid">
+                <!-- Running Tasks -->
+                <section class="panel" style="--delay: 6" aria-labelledby="running-heading">
+                    <header class="panel-header">
+                        <h2 id="running-heading"><span class="panel-icon" aria-hidden="true">🔄</span> Aktive Tasks</h2>
+                        <span class="panel-badge" id="running-badge">0</span>
+                    </header>
+                    <div id="running-tasks" class="task-list" role="list">
+                        <div class="empty-state">Keine aktiven Tasks</div>
+                    </div>
+                </section>
+
+                <!-- Scheduled -->
+                <section class="panel" style="--delay: 7" aria-labelledby="scheduled-heading">
+                    <header class="panel-header">
+                        <h2 id="scheduled-heading"><span class="panel-icon" aria-hidden="true">📋</span> Scheduled</h2>
+                        <span class="panel-badge muted" id="scheduled-badge">0</span>
+                    </header>
+                    <div id="scheduled-tasks" class="task-list" role="list">
+                        <div class="empty-state">Laden…</div>
+                    </div>
+                </section>
+
+                <!-- Completed -->
+                <section class="panel" style="--delay: 8" aria-labelledby="completed-heading">
+                    <header class="panel-header">
+                        <h2 id="completed-heading"><span class="panel-icon" aria-hidden="true">✅</span> Erledigt</h2>
+                        <span class="panel-badge success" id="completed-badge">0</span>
+                    </header>
+                    <div id="completed-tasks" class="task-list" role="list">
+                        <div class="empty-state">Laden…</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Providers -->
+            <section class="panel providers-panel" style="--delay: 9" aria-labelledby="providers-heading">
+                <header class="panel-header">
+                    <h2 id="providers-heading"><span class="panel-icon" aria-hidden="true">🌐</span> API Providers (heute)</h2>
+                </header>
+                <div id="providers-list" class="providers-grid">
+                    <div class="empty-state">Laden…</div>
+                </div>
+            </section>
+
+            <!-- Chart -->
+            <section class="panel chart-panel" style="--delay: 10" aria-labelledby="chart-heading">
+                <header class="panel-header">
+                    <h2 id="chart-heading" style="text-wrap: balance;"><span class="panel-icon" aria-hidden="true">📈</span> <span id="chart-title">Token Verbrauch &amp; Kosten</span></h2>
+                    <div class="chart-legend" aria-hidden="true">
+                        <span class="legend-item"><span class="legend-dot input"></span> Input</span>
+                        <span class="legend-item"><span class="legend-dot output"></span> Output</span>
+                        <span class="legend-item"><span class="legend-dot cost"></span> Kosten</span>
+                    </div>
+                </header>
+                <div class="chart-container">
+                    <canvas id="tokenChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Cost Summary -->
+            <section class="panel cost-panel" style="--delay: 11" aria-labelledby="cost-heading">
+                <header class="panel-header">
+                    <h2 id="cost-heading"><span class="panel-icon" aria-hidden="true">💵</span> Kosten Übersicht</h2>
+                    <div class="cost-controls">
+                        <label for="cost-period" class="visually-hidden">Zeitraum auswählen</label>
+                        <select id="cost-period" class="period-select">
+                            <option value="7">7&nbsp;Tage</option>
+                            <option value="30">30&nbsp;Tage</option>
+                            <option value="0" selected>Alles</option>
+                        </select>
+                    </div>
+                </header>
+                
+                <div class="total-banner" id="total-banner">
+                    <div class="total-item main">
+                        <span class="total-label">Gesamt</span>
+                        <span class="total-value" id="alltime-cost">-</span>
+                    </div>
+                    <div class="total-item">
+                        <span class="total-label">Tokens</span>
+                        <span class="total-value" id="alltime-tokens">-</span>
+                    </div>
+                    <div class="total-item">
+                        <span class="total-label">API Calls</span>
+                        <span class="total-value" id="alltime-calls">-</span>
+                    </div>
+                    <div class="total-item">
+                        <span class="total-label">Zeitraum</span>
+                        <span class="total-value" id="alltime-period">-</span>
+                    </div>
+                </div>
+                
+                <div class="cost-table-wrapper">
+                    <table class="cost-table" id="cost-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Datum</th>
+                                <th scope="col">Tokens</th>
+                                <th scope="col">API Calls</th>
+                                <th scope="col">Kosten</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cost-table-body">
+                            <tr><td colspan="4" class="empty-state">Laden…</td></tr>
+                        </tbody>
+                        <tfoot id="cost-table-footer">
+                            <tr class="total-row">
+                                <td><strong>Summe (angezeigt)</strong></td>
+                                <td id="total-tokens">-</td>
+                                <td id="total-calls">-</td>
+                                <td id="total-cost">-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer role="contentinfo">
+            <span class="footer-text">🐾 Clawdi Mission Control</span>
+            <span class="footer-version">v3.0</span>
+        </footer>
+    </div>
+
+    <script>
+        // Respect reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        let tokenChart = null;
+        
+        // Format numbers
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+        
+        // Format duration
+        function formatDuration(ms) {
+            if (!ms) return '-';
+            if (ms < 1000) return ms + 'ms';
+            return (ms / 1000).toFixed(1) + 's';
+        }
+        
+        // Format time ago
+        function timeAgo(isoString) {
+            if (!isoString) return '-';
+            const date = new Date(isoString);
+            const now = new Date();
+            const diff = (now - date) / 1000;
+            
+            if (diff < 60) return Math.floor(diff) + 's ago';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+        
+        // Animate number change
+        function animateValue(element, newValue, isFormatted = false) {
+            if (prefersReducedMotion) {
+                element.textContent = isFormatted ? newValue : formatNumber(newValue);
+                return;
+            }
+            element.style.transform = 'scale(1.05)';
+            element.style.transition = 'transform 0.2s ease-out';
+            setTimeout(() => {
+                element.textContent = isFormatted ? newValue : formatNumber(newValue);
+                element.style.transform = 'scale(1)';
+            }, 100);
+        }
+        
+        // Fetch and update stats
+        async function updateStats() {
+            try {
+                const resp = await fetch('/api/stats');
+                const stats = await resp.json();
+                
+                document.getElementById('tasks-today').textContent = stats.tasks_today;
+                document.getElementById('completed-today').textContent = stats.completed_today;
+                document.getElementById('failed-today').textContent = stats.failed_today;
+                document.getElementById('running-now').textContent = stats.running_now;
+                document.getElementById('tokens-today').textContent = formatNumber(stats.tokens_today);
+                document.getElementById('tokens-input').textContent = formatNumber(stats.tokens_input);
+                document.getElementById('tokens-output').textContent = formatNumber(stats.tokens_output);
+                document.getElementById('cost-today').textContent = '$' + stats.cost_today_usd.toFixed(4);
+                document.getElementById('api-calls-today').textContent = stats.api_calls_today;
+                document.getElementById('api-errors-today').textContent = stats.api_errors_today;
+                document.getElementById('messages-today').textContent = stats.messages_today;
+                document.getElementById('uptime').textContent = stats.uptime_hours.toFixed(1) + 'h uptime';
+                
+                // Update badges
+                document.getElementById('running-badge').textContent = stats.running_now;
+                document.getElementById('completed-badge').textContent = stats.completed_today;
+                
+                // Status badge
+                const badge = document.getElementById('status-badge');
+                badge.className = 'status-dot ' + (stats.running_now > 0 ? 'active' : 'idle');
+            } catch (e) {
+                console.error('Failed to fetch stats:', e);
+            }
+        }
+        
+        // Fetch running tasks
+        async function updateRunning() {
+            try {
+                const resp = await fetch('/api/tasks/running');
+                const tasks = await resp.json();
+                const container = document.getElementById('running-tasks');
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Keine aktiven Tasks</div>';
+                    return;
+                }
+                
+                container.innerHTML = tasks.map(t => `
+                    <div class="task-item running" role="listitem">
+                        <div class="task-status-bar" aria-hidden="true"></div>
+                        <div class="task-content">
+                            <div class="task-header">
+                                <span class="task-name">${t.name}</span>
+                                ${t.tool_name ? `<span class="task-tool">${t.tool_name}</span>` : ''}
+                            </div>
+                            ${t.subtasks && t.subtasks.length > 0 ? `
+                                <div class="subtasks">
+                                    ${t.subtasks.map(s => `
+                                        <div class="subtask ${s.status}">
+                                            <span class="subtask-status" aria-label="${s.status}">${s.status === 'completed' ? '✓' : s.status === 'running' ? '🔄' : '○'}</span>
+                                            <span class="subtask-name">${s.name}</span>
+                                            <span class="subtask-duration">${formatDuration(s.duration_ms)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to fetch running tasks:', e);
+            }
+        }
+        
+        // Fetch recent completed
+        async function updateCompleted() {
+            try {
+                const resp = await fetch('/api/tasks/recent?limit=15');
+                const tasks = await resp.json();
+                const container = document.getElementById('completed-tasks');
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Noch keine erledigten Tasks</div>';
+                    return;
+                }
+                
+                container.innerHTML = tasks.map(t => `
+                    <div class="task-item ${t.status}" role="listitem">
+                        <div class="task-status-bar" aria-hidden="true"></div>
+                        <div class="task-content">
+                            <div class="task-header">
+                                <span class="task-status-icon" aria-label="${t.status === 'completed' ? 'Erfolgreich' : 'Fehlgeschlagen'}">${t.status === 'completed' ? '✓' : '✗'}</span>
+                                <span class="task-name">${t.name}</span>
+                                <time class="task-time">${formatDuration(t.duration_ms)} · ${timeAgo(t.completed_at)}</time>
+                            </div>
+                            ${t.result_summary ? `<p class="task-result">${t.result_summary}</p>` : ''}
+                            ${t.error_message ? `<p class="task-error">${t.error_message}</p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to fetch completed tasks:', e);
+            }
+        }
+        
+        // Fetch cron jobs
+        async function updateScheduled() {
+            try {
+                const resp = await fetch('/api/cron');
+                const jobs = await resp.json();
+                const container = document.getElementById('scheduled-tasks');
+                
+                document.getElementById('scheduled-badge').textContent = jobs.length;
+                
+                if (jobs.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Keine geplanten Jobs</div>';
+                    return;
+                }
+                
+                container.innerHTML = jobs.map(j => `
+                    <div class="task-item scheduled" role="listitem">
+                        <div class="task-status-bar" aria-hidden="true"></div>
+                        <div class="task-content">
+                            <div class="task-header">
+                                <span class="task-name">${j.name}</span>
+                                <code class="task-schedule">${j.schedule}</code>
+                            </div>
+                            <div class="task-meta">
+                                <span class="task-next">Nächster: ${j.next_run ? new Date(j.next_run).toLocaleTimeString('de') : '-'}</span>
+                                <span class="task-runs">${j.run_count}&nbsp;runs</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state">Keine geplanten Jobs</div>';
+            }
+        }
+        
+        // Fetch API providers
+        async function updateProviders() {
+            try {
+                const resp = await fetch('/api/calls/by-provider');
+                const providers = await resp.json();
+                const container = document.getElementById('providers-list');
+                
+                if (providers.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Noch keine API Calls</div>';
+                    return;
+                }
+                
+                container.innerHTML = providers.map(p => `
+                    <article class="provider-card ${p.errors > 0 ? 'has-error' : ''}">
+                        <div class="provider-icon" aria-hidden="true">${getProviderIcon(p.provider)}</div>
+                        <div class="provider-info">
+                            <span class="provider-name">${p.provider}</span>
+                            <span class="provider-model">${p.avg_latency_ms}ms avg</span>
+                        </div>
+                        <div class="provider-stats">
+                            <div class="provider-stat">
+                                <span class="provider-stat-value">${p.count}</span>
+                                <span class="provider-stat-label">calls</span>
+                            </div>
+                            ${p.errors > 0 ? `
+                                <div class="provider-stat error">
+                                    <span class="provider-stat-value">${p.errors}</span>
+                                    <span class="provider-stat-label">errors</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </article>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to fetch providers:', e);
+            }
+        }
+        
+        // Get provider icon
+        function getProviderIcon(provider) {
+            const icons = {
+                'anthropic': '🤖',
+                'openai': '🧠',
+                'brave': '🔍',
+                'proton': '📧',
+                'telegram': '📱',
+                'google': '🔎',
+                'default': '🌐'
+            };
+            const key = Object.keys(icons).find(k => provider.toLowerCase().includes(k));
+            return icons[key] || icons.default;
+        }
+        
+        // Format currency
+        function formatCurrency(num) {
+            return '$' + num.toFixed(2);
+        }
+        
+        // Format date (German)
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+        }
+        
+        // Token chart with cost line
+        async function updateChart(days = null) {
+            try {
+                const period = days !== null ? days : currentPeriod;
+                const url = period === 0 ? '/api/tokens/summary' : `/api/tokens/summary?days=${period}`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                
+                const ctx = document.getElementById('tokenChart').getContext('2d');
+                
+                if (tokenChart) {
+                    tokenChart.destroy();
+                }
+                
+                // Chart.js configuration with new design colors
+                tokenChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.date.slice(5)),
+                        datasets: [
+                            {
+                                label: 'Input Tokens',
+                                data: data.map(d => d.input_tokens),
+                                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                                borderRadius: 4,
+                                yAxisID: 'y',
+                                stack: 'tokens',
+                            },
+                            {
+                                label: 'Output Tokens',
+                                data: data.map(d => d.output_tokens),
+                                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                                borderRadius: 4,
+                                yAxisID: 'y',
+                                stack: 'tokens',
+                            },
+                            {
+                                label: 'Kosten ($)',
+                                data: data.map(d => d.cost_usd),
+                                type: 'line',
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                borderWidth: 3,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#f59e0b',
+                                pointBorderColor: '#0c0c14',
+                                pointBorderWidth: 2,
+                                fill: true,
+                                yAxisID: 'y1',
+                                tension: 0.3,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: prefersReducedMotion ? false : { duration: 750 },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#1c1c2b',
+                                titleColor: '#f1f5f9',
+                                bodyColor: '#94a3b8',
+                                borderColor: '#2a2a40',
+                                borderWidth: 1,
+                                padding: 12,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.dataset.label === 'Kosten ($)') {
+                                            return context.dataset.label + ': $' + context.raw.toFixed(2);
+                                        }
+                                        return context.dataset.label + ': ' + formatNumber(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                stacked: true,
+                                grid: { 
+                                    color: 'rgba(255,255,255,0.05)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: '#64748b',
+                                    font: { family: "'JetBrains Mono', monospace", size: 11 }
+                                }
+                            },
+                            y: { 
+                                stacked: true,
+                                position: 'left',
+                                title: { 
+                                    display: true, 
+                                    text: 'Tokens', 
+                                    color: '#64748b',
+                                    font: { family: "'DM Sans', sans-serif", size: 12 }
+                                },
+                                grid: { 
+                                    color: 'rgba(255,255,255,0.05)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: '#64748b',
+                                    font: { family: "'JetBrains Mono', monospace", size: 11 },
+                                    callback: function(value) {
+                                        return formatNumber(value);
+                                    }
+                                }
+                            },
+                            y1: {
+                                position: 'right',
+                                title: { 
+                                    display: true, 
+                                    text: 'Kosten ($)', 
+                                    color: '#f59e0b',
+                                    font: { family: "'DM Sans', sans-serif", size: 12 }
+                                },
+                                grid: { drawOnChartArea: false },
+                                ticks: {
+                                    color: '#f59e0b',
+                                    font: { family: "'JetBrains Mono', monospace", size: 11 },
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to fetch token data:', e);
+            }
+        }
+        
+        // Current selected period
+        let currentPeriod = 0;  // 0 = all
+        
+        // Load all-time totals
+        async function updateAlltimeTotals() {
+            try {
+                const resp = await fetch('/api/tokens/total');
+                const data = await resp.json();
+                
+                document.getElementById('alltime-cost').textContent = formatCurrency(data.cost_usd || 0);
+                document.getElementById('alltime-tokens').textContent = formatNumber(data.total_tokens || 0);
+                document.getElementById('alltime-calls').textContent = data.api_calls || 0;
+                
+                if (data.first_date && data.last_date) {
+                    document.getElementById('alltime-period').textContent = 
+                        `${data.first_date.slice(5)} – ${data.last_date.slice(5)} (${data.total_days} Tage)`;
+                }
+            } catch (e) {
+                console.error('Failed to fetch all-time totals:', e);
+            }
+        }
+        
+        // Cost table
+        async function updateCostTable(days = null) {
+            try {
+                const period = days !== null ? days : currentPeriod;
+                const url = period === 0 ? '/api/tokens/summary' : `/api/tokens/summary?days=${period}`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                const tbody = document.getElementById('cost-table-body');
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Keine Daten verfügbar</td></tr>';
+                    return;
+                }
+                
+                // Calculate totals for displayed period
+                let totalTokens = 0;
+                let totalCalls = 0;
+                let totalCost = 0;
+                
+                // Reverse to show newest first
+                const sortedData = [...data].reverse();
+                
+                tbody.innerHTML = sortedData.map(d => {
+                    totalTokens += d.total_tokens || 0;
+                    totalCalls += d.api_calls || 0;
+                    totalCost += d.cost_usd || 0;
+                    
+                    return `
+                        <tr>
+                            <td>${formatDate(d.date)}</td>
+                            <td>${formatNumber(d.total_tokens || 0)}</td>
+                            <td>${d.api_calls || 0}</td>
+                            <td class="cost-cell">${formatCurrency(d.cost_usd || 0)}</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // Update footer totals (displayed period)
+                document.getElementById('total-tokens').textContent = formatNumber(totalTokens);
+                document.getElementById('total-calls').textContent = totalCalls;
+                document.getElementById('total-cost').innerHTML = '<strong>' + formatCurrency(totalCost) + '</strong>';
+            } catch (e) {
+                console.error('Failed to fetch cost data:', e);
+            }
+        }
+        
+        // Update chart title based on period
+        function updateChartTitle(days) {
+            const titleEl = document.getElementById('chart-title');
+            if (days === 0) {
+                titleEl.textContent = 'Token Verbrauch & Kosten (alle Daten)';
+            } else {
+                titleEl.textContent = `Token Verbrauch & Kosten (${days} Tage)`;
+            }
+        }
+        
+        // Period selector handler
+        document.getElementById('cost-period').addEventListener('change', function(e) {
+            currentPeriod = parseInt(e.target.value);
+            updateChartTitle(currentPeriod);
+            updateCostTable(currentPeriod);
+            updateChart(currentPeriod);
+        });
+        
+        // Initial load
+        updateStats();
+        updateRunning();
+        updateCompleted();
+        updateScheduled();
+        updateProviders();
+        updateAlltimeTotals();
+        updateChartTitle(currentPeriod);
+        updateChart();
+        updateCostTable();
+        
+        // Auto-refresh
+        setInterval(updateStats, 5000);
+        setInterval(updateRunning, 2000);
+        setInterval(updateCompleted, 10000);
+        setInterval(updateProviders, 30000);
+        setInterval(updateAlltimeTotals, 120000);
+        setInterval(() => updateCostTable(), 60000);
+        setInterval(() => updateChart(), 60000);
+    </script>
+</body>
+</html>
