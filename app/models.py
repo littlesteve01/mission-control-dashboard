@@ -120,3 +120,59 @@ class DailySummary(Base):
     
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+
+
+# ============ NEW FEATURES ============
+
+class KanbanTask(Base):
+    """Kanban board task"""
+    __tablename__ = "kanban_tasks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    column = Column(String(20), default="todo")  # todo, inprogress, done, archived
+    order_idx = Column(Integer, default=0)
+    color = Column(String(20), default="default")  # default, red, yellow, green, blue, purple
+    
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class AgentNote(Base):
+    """Notes for agent to check during heartbeats"""
+    __tablename__ = "agent_notes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)
+    priority = Column(String(20), default="normal")  # low, normal, high, urgent
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime)
+    
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class ActionLog(Base):
+    """Activity history log"""
+    __tablename__ = "action_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    action = Column(String(50), nullable=False)  # task_created, task_moved, note_added, etc.
+    details = Column(Text)
+    icon = Column(String(10), default="📋")
+    
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class Deliverable(Base):
+    """Quick access deliverables/folders"""
+    __tablename__ = "deliverables"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    path = Column(String(500), nullable=False)
+    icon = Column(String(10), default="📁")
+    description = Column(String(200))
+    order_idx = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, server_default=func.now())

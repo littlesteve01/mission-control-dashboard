@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
 from app.database import get_db, init_db, engine
-from app.models import Task, SubTask, TokenUsage, ApiCall, CronJob, DailySummary, Base
+from app.models import Task, SubTask, TokenUsage, ApiCall, CronJob, DailySummary, Base, KanbanTask, AgentNote, ActionLog, Deliverable
 from app.schemas import (
     TaskCreate, TaskUpdate, TaskResponse, 
     SubTaskCreate, SubTaskUpdate,
@@ -404,9 +404,351 @@ async def health_check():
     return {
         "status": "ok",
         "uptime_seconds": int((datetime.now() - STARTUP_TIME).total_seconds()),
-        "version": "2.0.0",
+        "version": "3.0.0",
         "data_source": "openclaw_sessions"
     }
+
+# ============ KANBAN BOARD ============
+
+@app.get("/api/kanban")
+async def get_kanban_tasks(db: Session = Depends(get_db)):
+    """Get all Kanban tasks grouped by column"""
+    tasks = db.query(KanbanTask).order_by(KanbanTask.order_idx).all()
+    
+    columns = {
+        "todo": [],
+        "inprogress": [],
+        "done": [],
+        "archived": []
+    }
+    
+    for task in tasks:
+        col = task.column if task.column in columns else "todo"
+        columns[col].append({
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "color": task.color,
+            "order_idx": task.order_idx,
+            "created_at": task.created_at.isoformat() if task.created_at else None,
+            "updated_at": task.updated_at.isoformat() if task.updated_at else None
+        })
+    
+    return columns
+
+@app.post("/api/kanban")
+async def create_kanban_task(
+    title: str,
+    description: str = "",
+    column: str = "todo",
+    color: str = "default",
+    db: Session = Depends(get_db)
+):
+    """Create a new Kanban task"""
+    # Get max order for column
+    max_order = db.query(func.max(KanbanTask.order_idx)).filter(KanbanTask.column == column).scalar() or 0
+    
+    task = KanbanTask(
+        title=title,
+        description=description,
+        column=column,
+        color=color,
+        order_idx=max_order + 1
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    
+    # Log action
+    log = ActionLog(action="task_created", details=f"Created: {title}", icon="➕")
+    db.add(log)
+    db.commit()
+    
+    return {"ok": True, "id": task.id, "task": {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "column": task.column,
+        "color": task.color
+    }}
+
+@app.patch("/api/kanban/{task_id}")
+async def update_kanban_task(
+    task_id: int,
+    title: str = None,
+    description: str = None,
+    column: str = None,
+    color: str = None,
+    order_idx: int = None,
+    db: Session = Depends(get_db)
+):
+    """Update a Kanban task"""
+    task = db.query(KanbanTask).filter(KanbanTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    old_column = task.column
+    
+    if title is not None:
+        task.title = title
+    if description is not None:
+        task.description = description
+    if column is not None:
+        task.column = column
+    if color is not None:
+        task.color = color
+    if order_idx is not None:
+        task.order_idx = order_idx
+    
+    db.commit()
+    
+    # Log if moved
+    if column and column != old_column:
+        log = ActionLog(action="task_moved", details=f"Moved '{task.title}' to {column}", icon="↔️")
+        db.add(log)
+        db.commit()
+    
+    return {"ok": True}
+
+@app.delete("/api/kanban/{task_id}")
+async def delete_kanban_task(task_id: int, db: Session = Depends(get_db)):
+    """Delete a Kanban task"""
+    task = db.query(KanbanTask).filter(KanbanTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    title = task.title
+    db.delete(task)
+    db.commit()
+    
+    # Log action
+    log = ActionLog(action="task_deleted", details=f"Deleted: {title}", icon="🗑️")
+    db.add(log)
+    db.commit()
+    
+    return {"ok": True}
+
+@app.post("/api/kanban/{task_id}/move")
+async def move_kanban_task(
+    task_id: int,
+    column: str,
+    order_idx: int = 0,
+    db: Session = Depends(get_db)
+):
+    """Move a Kanban task to a different column"""
+    task = db.query(KanbanTask).filter(KanbanTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    old_column = task.column
+    task.column = column
+    task.order_idx = order_idx
+    db.commit()
+    
+    # Log action
+    if old_column != column:
+        log = ActionLog(action="task_moved", details=f"Moved '{task.title}': {old_column} → {column}", icon="↔️")
+        db.add(log)
+        db.commit()
+    
+    return {"ok": True}
+
+# ============ AGENT NOTES ============
+
+@app.get("/api/notes")
+async def get_notes(unread_only: bool = False, db: Session = Depends(get_db)):
+    """Get all notes for the agent"""
+    query = db.query(AgentNote).order_by(desc(AgentNote.created_at))
+    if unread_only:
+        query = query.filter(AgentNote.is_read == False)
+    
+    notes = query.limit(50).all()
+    return [{
+        "id": n.id,
+        "content": n.content,
+        "priority": n.priority,
+        "is_read": n.is_read,
+        "read_at": n.read_at.isoformat() if n.read_at else None,
+        "created_at": n.created_at.isoformat() if n.created_at else None
+    } for n in notes]
+
+@app.post("/api/notes")
+async def create_note(content: str, priority: str = "normal", db: Session = Depends(get_db)):
+    """Create a new note for the agent"""
+    note = AgentNote(content=content, priority=priority)
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    
+    # Log action
+    log = ActionLog(action="note_added", details=f"New note: {content[:50]}...", icon="📝")
+    db.add(log)
+    db.commit()
+    
+    return {"ok": True, "id": note.id}
+
+@app.patch("/api/notes/{note_id}/read")
+async def mark_note_read(note_id: int, db: Session = Depends(get_db)):
+    """Mark a note as read"""
+    note = db.query(AgentNote).filter(AgentNote.id == note_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    note.is_read = True
+    note.read_at = datetime.now()
+    db.commit()
+    
+    return {"ok": True}
+
+@app.delete("/api/notes/{note_id}")
+async def delete_note(note_id: int, db: Session = Depends(get_db)):
+    """Delete a note"""
+    note = db.query(AgentNote).filter(AgentNote.id == note_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    db.delete(note)
+    db.commit()
+    return {"ok": True}
+
+# ============ AGENT STATUS ============
+
+@app.get("/api/agent/status")
+async def get_agent_status():
+    """Get real-time agent status from OpenClaw"""
+    import subprocess
+    import json as json_lib
+    
+    try:
+        result = subprocess.run(
+            ["openclaw", "status", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode == 0:
+            try:
+                status_data = json_lib.loads(result.stdout)
+                return {
+                    "online": True,
+                    "status": "ready",
+                    "data": status_data
+                }
+            except:
+                return {
+                    "online": True,
+                    "status": "ready",
+                    "raw": result.stdout[:500]
+                }
+        else:
+            return {
+                "online": False,
+                "status": "offline",
+                "error": result.stderr[:200] if result.stderr else "Unknown error"
+            }
+    except subprocess.TimeoutExpired:
+        return {"online": False, "status": "timeout", "error": "Status check timed out"}
+    except FileNotFoundError:
+        return {"online": False, "status": "not_found", "error": "OpenClaw CLI not found"}
+    except Exception as e:
+        return {"online": False, "status": "error", "error": str(e)}
+
+# ============ ACTION LOG ============
+
+@app.get("/api/logs")
+async def get_action_logs(limit: int = Query(100, le=500), db: Session = Depends(get_db)):
+    """Get recent action logs"""
+    logs = db.query(ActionLog).order_by(desc(ActionLog.created_at)).limit(limit).all()
+    return [{
+        "id": l.id,
+        "action": l.action,
+        "details": l.details,
+        "icon": l.icon,
+        "created_at": l.created_at.isoformat() if l.created_at else None
+    } for l in logs]
+
+@app.post("/api/logs")
+async def add_action_log(action: str, details: str = "", icon: str = "📋", db: Session = Depends(get_db)):
+    """Add an action log entry"""
+    log = ActionLog(action=action, details=details, icon=icon)
+    db.add(log)
+    db.commit()
+    return {"ok": True, "id": log.id}
+
+@app.delete("/api/logs/clear")
+async def clear_action_logs(keep_last: int = Query(100, ge=0), db: Session = Depends(get_db)):
+    """Clear old action logs, keeping the most recent ones"""
+    if keep_last > 0:
+        # Get IDs to keep
+        keep_ids = db.query(ActionLog.id).order_by(desc(ActionLog.created_at)).limit(keep_last).all()
+        keep_ids = [x[0] for x in keep_ids]
+        
+        db.query(ActionLog).filter(ActionLog.id.notin_(keep_ids)).delete(synchronize_session=False)
+    else:
+        db.query(ActionLog).delete()
+    
+    db.commit()
+    return {"ok": True, "message": f"Kept last {keep_last} logs"}
+
+# ============ DELIVERABLES ============
+
+@app.get("/api/deliverables")
+async def get_deliverables(db: Session = Depends(get_db)):
+    """Get quick-access deliverables"""
+    deliverables = db.query(Deliverable).order_by(Deliverable.order_idx).all()
+    
+    # If empty, return some defaults
+    if not deliverables:
+        defaults = [
+            {"name": "Workspace", "path": "~/.openclaw/workspace", "icon": "📁", "description": "OpenClaw workspace"},
+            {"name": "Memory", "path": "~/.openclaw/workspace/memory", "icon": "🧠", "description": "Memory files"},
+            {"name": "Skills", "path": "~/.openclaw/workspace/skills", "icon": "⚡", "description": "Installed skills"},
+            {"name": "Projects", "path": "~/.openclaw/workspace/projects", "icon": "📦", "description": "Project folders"},
+        ]
+        return defaults
+    
+    return [{
+        "id": d.id,
+        "name": d.name,
+        "path": d.path,
+        "icon": d.icon,
+        "description": d.description
+    } for d in deliverables]
+
+@app.post("/api/deliverables")
+async def add_deliverable(
+    name: str,
+    path: str,
+    icon: str = "📁",
+    description: str = "",
+    db: Session = Depends(get_db)
+):
+    """Add a quick-access deliverable"""
+    max_order = db.query(func.max(Deliverable.order_idx)).scalar() or 0
+    
+    deliverable = Deliverable(
+        name=name,
+        path=path,
+        icon=icon,
+        description=description,
+        order_idx=max_order + 1
+    )
+    db.add(deliverable)
+    db.commit()
+    
+    return {"ok": True, "id": deliverable.id}
+
+@app.delete("/api/deliverables/{deliverable_id}")
+async def delete_deliverable(deliverable_id: int, db: Session = Depends(get_db)):
+    """Delete a deliverable"""
+    deliverable = db.query(Deliverable).filter(Deliverable.id == deliverable_id).first()
+    if not deliverable:
+        raise HTTPException(status_code=404, detail="Deliverable not found")
+    
+    db.delete(deliverable)
+    db.commit()
+    return {"ok": True}
 
 if __name__ == "__main__":
     import uvicorn

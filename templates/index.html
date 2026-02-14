@@ -189,8 +189,101 @@
                 </div>
             </section>
 
+            <!-- Agent Status & Notes Row -->
+            <div class="two-col-grid" style="--delay: 11">
+                <!-- Agent Status -->
+                <section class="panel agent-status-panel" aria-labelledby="agent-status-heading">
+                    <header class="panel-header">
+                        <h2 id="agent-status-heading"><span class="panel-icon" aria-hidden="true">🤖</span> Agent Status</h2>
+                        <span class="panel-badge" id="agent-status-badge">offline</span>
+                    </header>
+                    <div id="agent-status" class="agent-status-content">
+                        <div class="agent-indicator offline">
+                            <span class="agent-dot"></span>
+                            <span class="agent-state">Checking...</span>
+                        </div>
+                        <div class="agent-details">
+                            <span id="agent-model">-</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notes for Agent -->
+                <section class="panel notes-panel" aria-labelledby="notes-heading">
+                    <header class="panel-header">
+                        <h2 id="notes-heading"><span class="panel-icon" aria-hidden="true">📝</span> Notes für Agent</h2>
+                        <button class="panel-action" onclick="showAddNoteModal()" title="Neue Notiz">+</button>
+                    </header>
+                    <div id="notes-list" class="notes-list">
+                        <div class="empty-state">Keine Notizen</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Kanban Board -->
+            <section class="panel kanban-panel" style="--delay: 12" aria-labelledby="kanban-heading">
+                <header class="panel-header">
+                    <h2 id="kanban-heading"><span class="panel-icon" aria-hidden="true">📋</span> Kanban Board</h2>
+                    <button class="panel-action" onclick="showAddTaskModal()" title="Neuer Task">+ Task</button>
+                </header>
+                <div class="kanban-board">
+                    <div class="kanban-column" data-column="todo">
+                        <div class="kanban-column-header todo">
+                            <span>📌 To Do</span>
+                            <span class="kanban-count" id="count-todo">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="kanban-todo" ondrop="dropTask(event)" ondragover="allowDrop(event)"></div>
+                    </div>
+                    <div class="kanban-column" data-column="inprogress">
+                        <div class="kanban-column-header inprogress">
+                            <span>🔄 In Progress</span>
+                            <span class="kanban-count" id="count-inprogress">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="kanban-inprogress" ondrop="dropTask(event)" ondragover="allowDrop(event)"></div>
+                    </div>
+                    <div class="kanban-column" data-column="done">
+                        <div class="kanban-column-header done">
+                            <span>✅ Done</span>
+                            <span class="kanban-count" id="count-done">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="kanban-done" ondrop="dropTask(event)" ondragover="allowDrop(event)"></div>
+                    </div>
+                    <div class="kanban-column" data-column="archived">
+                        <div class="kanban-column-header archived">
+                            <span>🗄️ Archived</span>
+                            <span class="kanban-count" id="count-archived">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="kanban-archived" ondrop="dropTask(event)" ondragover="allowDrop(event)"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Log & Deliverables Row -->
+            <div class="two-col-grid" style="--delay: 13">
+                <!-- Action Log -->
+                <section class="panel log-panel" aria-labelledby="log-heading">
+                    <header class="panel-header">
+                        <h2 id="log-heading"><span class="panel-icon" aria-hidden="true">📜</span> Action Log</h2>
+                        <button class="panel-action muted" onclick="clearLogs()" title="Alte Logs löschen">🗑️</button>
+                    </header>
+                    <div id="action-log" class="action-log">
+                        <div class="empty-state">Keine Aktivitäten</div>
+                    </div>
+                </section>
+
+                <!-- Deliverables -->
+                <section class="panel deliverables-panel" aria-labelledby="deliverables-heading">
+                    <header class="panel-header">
+                        <h2 id="deliverables-heading"><span class="panel-icon" aria-hidden="true">📁</span> Quick Access</h2>
+                    </header>
+                    <div id="deliverables-list" class="deliverables-grid">
+                        <div class="empty-state">Laden...</div>
+                    </div>
+                </section>
+            </div>
+
             <!-- Cost Summary -->
-            <section class="panel cost-panel" style="--delay: 11" aria-labelledby="cost-heading">
+            <section class="panel cost-panel" style="--delay: 14" aria-labelledby="cost-heading">
                 <header class="panel-header">
                     <h2 id="cost-heading"><span class="panel-icon" aria-hidden="true">💵</span> Kosten Übersicht</h2>
                     <div class="cost-controls">
@@ -727,6 +820,262 @@
             updateChart(currentPeriod);
         });
         
+        // ============ AGENT STATUS ============
+        async function updateAgentStatus() {
+            try {
+                const resp = await fetch('/api/agent/status');
+                const status = await resp.json();
+                const container = document.getElementById('agent-status');
+                const badge = document.getElementById('agent-status-badge');
+                
+                const isOnline = status.online;
+                const state = status.status || 'unknown';
+                
+                badge.textContent = isOnline ? 'online' : 'offline';
+                badge.className = 'panel-badge ' + (isOnline ? 'success' : 'error');
+                
+                container.innerHTML = `
+                    <div class="agent-indicator ${isOnline ? 'online' : 'offline'}">
+                        <span class="agent-dot"></span>
+                        <span class="agent-state">${isOnline ? (state === 'thinking' ? '🤔 Thinking...' : '✅ Ready') : '❌ Offline'}</span>
+                    </div>
+                    <div class="agent-details">
+                        ${status.data ? `<span class="agent-model">${status.data.model || '-'}</span>` : ''}
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Failed to fetch agent status:', e);
+            }
+        }
+
+        // ============ NOTES ============
+        async function updateNotes() {
+            try {
+                const resp = await fetch('/api/notes');
+                const notes = await resp.json();
+                const container = document.getElementById('notes-list');
+                
+                if (notes.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Keine Notizen - Klicke + um eine zu erstellen</div>';
+                    return;
+                }
+                
+                container.innerHTML = notes.map(n => `
+                    <div class="note-item ${n.is_read ? 'read' : 'unread'} ${n.priority}">
+                        <div class="note-content">${n.content}</div>
+                        <div class="note-meta">
+                            <span class="note-time">${timeAgo(n.created_at)}</span>
+                            ${!n.is_read ? `<button class="note-action" onclick="markNoteRead(${n.id})" title="Als gelesen markieren">✓</button>` : ''}
+                            <button class="note-action delete" onclick="deleteNote(${n.id})" title="Löschen">×</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to fetch notes:', e);
+            }
+        }
+
+        async function addNote(content, priority = 'normal') {
+            try {
+                await fetch(`/api/notes?content=${encodeURIComponent(content)}&priority=${priority}`, { method: 'POST' });
+                updateNotes();
+                updateActionLog();
+            } catch (e) {
+                console.error('Failed to add note:', e);
+            }
+        }
+
+        async function markNoteRead(id) {
+            try {
+                await fetch(`/api/notes/${id}/read`, { method: 'PATCH' });
+                updateNotes();
+            } catch (e) {
+                console.error('Failed to mark note read:', e);
+            }
+        }
+
+        async function deleteNote(id) {
+            try {
+                await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+                updateNotes();
+            } catch (e) {
+                console.error('Failed to delete note:', e);
+            }
+        }
+
+        function showAddNoteModal() {
+            const content = prompt('Neue Notiz für Agent:');
+            if (content && content.trim()) {
+                addNote(content.trim());
+            }
+        }
+
+        // ============ KANBAN ============
+        let draggedTaskId = null;
+
+        async function updateKanban() {
+            try {
+                const resp = await fetch('/api/kanban');
+                const columns = await resp.json();
+                
+                for (const [col, tasks] of Object.entries(columns)) {
+                    const container = document.getElementById(`kanban-${col}`);
+                    const countEl = document.getElementById(`count-${col}`);
+                    
+                    if (countEl) countEl.textContent = tasks.length;
+                    
+                    if (container) {
+                        if (tasks.length === 0) {
+                            container.innerHTML = '<div class="kanban-empty">Drop tasks here</div>';
+                        } else {
+                            container.innerHTML = tasks.map(t => `
+                                <div class="kanban-task ${t.color}" draggable="true" 
+                                     ondragstart="dragTask(event, ${t.id})" 
+                                     data-id="${t.id}">
+                                    <div class="kanban-task-title">${t.title}</div>
+                                    ${t.description ? `<div class="kanban-task-desc">${t.description}</div>` : ''}
+                                    <div class="kanban-task-actions">
+                                        <button onclick="editKanbanTask(${t.id}, '${t.title.replace(/'/g, "\\'")}', '${(t.description || '').replace(/'/g, "\\'")}')" title="Bearbeiten">✏️</button>
+                                        <button onclick="deleteKanbanTask(${t.id})" title="Löschen">🗑️</button>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch kanban:', e);
+            }
+        }
+
+        function dragTask(event, id) {
+            draggedTaskId = id;
+            event.dataTransfer.setData('text/plain', id);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        async function dropTask(event) {
+            event.preventDefault();
+            const column = event.target.closest('.kanban-column')?.dataset.column;
+            if (column && draggedTaskId) {
+                try {
+                    await fetch(`/api/kanban/${draggedTaskId}/move?column=${column}`, { method: 'POST' });
+                    updateKanban();
+                    updateActionLog();
+                } catch (e) {
+                    console.error('Failed to move task:', e);
+                }
+            }
+            draggedTaskId = null;
+        }
+
+        async function addKanbanTask(title, description = '', column = 'todo') {
+            try {
+                await fetch(`/api/kanban?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&column=${column}`, { method: 'POST' });
+                updateKanban();
+                updateActionLog();
+            } catch (e) {
+                console.error('Failed to add kanban task:', e);
+            }
+        }
+
+        async function deleteKanbanTask(id) {
+            if (confirm('Task wirklich löschen?')) {
+                try {
+                    await fetch(`/api/kanban/${id}`, { method: 'DELETE' });
+                    updateKanban();
+                    updateActionLog();
+                } catch (e) {
+                    console.error('Failed to delete task:', e);
+                }
+            }
+        }
+
+        function editKanbanTask(id, currentTitle, currentDesc) {
+            const title = prompt('Task Titel:', currentTitle);
+            if (title && title.trim()) {
+                const desc = prompt('Beschreibung (optional):', currentDesc);
+                fetch(`/api/kanban/${id}?title=${encodeURIComponent(title.trim())}&description=${encodeURIComponent(desc || '')}`, { method: 'PATCH' })
+                    .then(() => updateKanban());
+            }
+        }
+
+        function showAddTaskModal() {
+            const title = prompt('Neuer Task:');
+            if (title && title.trim()) {
+                const desc = prompt('Beschreibung (optional):');
+                addKanbanTask(title.trim(), desc || '');
+            }
+        }
+
+        // ============ ACTION LOG ============
+        async function updateActionLog() {
+            try {
+                const resp = await fetch('/api/logs?limit=50');
+                const logs = await resp.json();
+                const container = document.getElementById('action-log');
+                
+                if (logs.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Keine Aktivitäten</div>';
+                    return;
+                }
+                
+                container.innerHTML = logs.map(l => `
+                    <div class="log-entry">
+                        <span class="log-icon">${l.icon}</span>
+                        <span class="log-details">${l.details}</span>
+                        <span class="log-time">${timeAgo(l.created_at)}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to fetch action log:', e);
+            }
+        }
+
+        async function clearLogs() {
+            if (confirm('Alte Logs löschen? (Letzte 50 bleiben)')) {
+                try {
+                    await fetch('/api/logs/clear?keep_last=50', { method: 'DELETE' });
+                    updateActionLog();
+                } catch (e) {
+                    console.error('Failed to clear logs:', e);
+                }
+            }
+        }
+
+        // ============ DELIVERABLES ============
+        async function updateDeliverables() {
+            try {
+                const resp = await fetch('/api/deliverables');
+                const items = await resp.json();
+                const container = document.getElementById('deliverables-list');
+                
+                container.innerHTML = items.map(d => `
+                    <a class="deliverable-item" href="#" onclick="copyPath('${d.path}')" title="${d.description || d.path}">
+                        <span class="deliverable-icon">${d.icon}</span>
+                        <span class="deliverable-name">${d.name}</span>
+                    </a>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to fetch deliverables:', e);
+            }
+        }
+
+        function copyPath(path) {
+            navigator.clipboard.writeText(path.replace('~', '/home/stephan')).then(() => {
+                // Brief visual feedback
+                const el = event.target.closest('.deliverable-item');
+                if (el) {
+                    el.style.background = 'var(--success-bg)';
+                    setTimeout(() => el.style.background = '', 500);
+                }
+            });
+            return false;
+        }
+
         // Initial load
         updateStats();
         updateRunning();
@@ -737,6 +1086,11 @@
         updateChartTitle(currentPeriod);
         updateChart();
         updateCostTable();
+        updateAgentStatus();
+        updateNotes();
+        updateKanban();
+        updateActionLog();
+        updateDeliverables();
         
         // Auto-refresh
         setInterval(updateStats, 5000);
@@ -746,6 +1100,10 @@
         setInterval(updateAlltimeTotals, 120000);
         setInterval(() => updateCostTable(), 60000);
         setInterval(() => updateChart(), 60000);
+        setInterval(updateAgentStatus, 10000);
+        setInterval(updateNotes, 30000);
+        setInterval(updateKanban, 15000);
+        setInterval(updateActionLog, 10000);
     </script>
 </body>
 </html>

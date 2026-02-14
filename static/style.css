@@ -992,3 +992,403 @@ input:focus-visible {
         display: none;
     }
 }
+
+/* ============================================
+   Two Column Grid
+   ============================================ */
+.two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-unit-3);
+    margin-bottom: var(--space-unit-3);
+    animation: fadeIn var(--transition-slow) both;
+    animation-delay: calc(var(--delay, 0) * 50ms);
+}
+
+@media (max-width: 900px) {
+    .two-col-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   Agent Status
+   ============================================ */
+.agent-status-content {
+    padding: var(--space-unit-2);
+}
+
+.agent-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-unit);
+    padding: var(--space-unit-2);
+    border-radius: 8px;
+    background: var(--bg-surface);
+}
+
+.agent-indicator.online {
+    background: var(--success-soft);
+}
+
+.agent-indicator.offline {
+    background: var(--error-soft);
+}
+
+.agent-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+
+.agent-indicator.online .agent-dot {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+}
+
+.agent-indicator.offline .agent-dot {
+    background: var(--error);
+}
+
+.agent-state {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.agent-details {
+    margin-top: var(--space-unit);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Notes
+   ============================================ */
+.notes-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--space-unit);
+}
+
+.note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--space-unit) var(--space-unit-2);
+    margin-bottom: var(--space-unit);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    border-left: 3px solid var(--border);
+}
+
+.note-item.unread {
+    border-left-color: var(--info);
+    background: var(--info-soft);
+}
+
+.note-item.urgent {
+    border-left-color: var(--error);
+}
+
+.note-item.high {
+    border-left-color: var(--warning);
+}
+
+.note-content {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.note-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-unit);
+    margin-left: var(--space-unit-2);
+}
+
+.note-time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.note-action {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.note-action:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+.note-action.delete:hover {
+    color: var(--error);
+}
+
+/* ============================================
+   Kanban Board
+   ============================================ */
+.kanban-panel {
+    margin-bottom: var(--space-unit-3);
+}
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-unit-2);
+    padding: var(--space-unit-2);
+    min-height: 300px;
+}
+
+@media (max-width: 1200px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+}
+
+.kanban-column {
+    background: var(--bg-surface);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-unit) var(--space-unit-2);
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 8px 8px 0 0;
+}
+
+.kanban-column-header.todo {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.kanban-column-header.inprogress {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.kanban-column-header.done {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+.kanban-column-header.archived {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+}
+
+.kanban-count {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.kanban-tasks {
+    flex: 1;
+    padding: var(--space-unit);
+    min-height: 200px;
+    overflow-y: auto;
+}
+
+.kanban-empty {
+    text-align: center;
+    padding: var(--space-unit-4);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.kanban-task {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: var(--space-unit) var(--space-unit-2);
+    margin-bottom: var(--space-unit);
+    cursor: grab;
+    transition: all var(--transition-fast);
+}
+
+.kanban-task:hover {
+    border-color: var(--border);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.kanban-task:active {
+    cursor: grabbing;
+}
+
+.kanban-task.red { border-left: 3px solid var(--error); }
+.kanban-task.yellow { border-left: 3px solid var(--warning); }
+.kanban-task.green { border-left: 3px solid var(--success); }
+.kanban-task.blue { border-left: 3px solid var(--info); }
+.kanban-task.purple { border-left: 3px solid #a855f7; }
+
+.kanban-task-title {
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.kanban-task-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+.kanban-task-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: var(--space-unit);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.kanban-task:hover .kanban-task-actions {
+    opacity: 1;
+}
+
+.kanban-task-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.kanban-task-actions button:hover {
+    background: var(--bg-surface);
+}
+
+/* ============================================
+   Action Log
+   ============================================ */
+.action-log {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: var(--space-unit);
+}
+
+.log-entry {
+    display: flex;
+    align-items: center;
+    gap: var(--space-unit);
+    padding: var(--space-unit) 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 12px;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.log-details {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.log-time {
+    color: var(--text-muted);
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   Deliverables
+   ============================================ */
+.deliverables-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-unit);
+    padding: var(--space-unit-2);
+}
+
+.deliverable-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-unit);
+    padding: var(--space-unit) var(--space-unit-2);
+    background: var(--bg-surface);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.deliverable-item:hover {
+    background: var(--bg-elevated);
+    transform: translateX(4px);
+}
+
+.deliverable-icon {
+    font-size: 18px;
+}
+
+.deliverable-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ============================================
+   Panel Action Buttons
+   ============================================ */
+.panel-action {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.panel-action:hover {
+    background: var(--bg-elevated);
+    border-color: var(--amber);
+}
+
+.panel-action.muted {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.panel-action.muted:hover {
+    color: var(--error);
+}
+
+/* ============================================
+   Pulse Animation
+   ============================================ */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
