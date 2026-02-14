@@ -29,7 +29,7 @@ A beautiful, modern dashboard that monitors your OpenClaw agent's activity, toke
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/mission-control-dashboard.git
+git clone https://github.com/littlesteve01/mission-control-dashboard.git
 cd mission-control-dashboard
 
 # Create virtual environment
